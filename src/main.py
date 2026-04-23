@@ -42,14 +42,13 @@ def main(
     
     for walk in walks:
         plt.plot(walk)
-        plt.pause(0.01)
     plt.show()
 
 if __name__ == "__main__":
     config = SimulationConfig(
         num_timestamps=10,
-        num_lines=50,
-        range_vals=list(range(-5,4)),
+        num_lines=5000,
+        range_vals=list(range(-4,5)),
         weights=[0.1, 0.2, 0.3, 0.4, 0.5, 0.4, 0.3, 0.2, 0.1]
     )
 
