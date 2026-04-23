@@ -1,4 +1,5 @@
 import random as rnd
+import math
 import itertools
 import matplotlib.pyplot as plt
 from typing import Protocol, Sequence
@@ -8,23 +9,23 @@ from dataclasses import dataclass
 class SimulationConfig:
     num_timestamps: int
     num_lines: int
-    range_vals: Sequence[int]
-    weights: Sequence[float]
+    sigma: float
+    mean: int
 
 class MovementGenerator(Protocol):
     def __call__(
             self, 
-            range_vals: Sequence[int],
-            weights: Sequence[float],
-            k: int
-        ) -> Sequence[int]: ...
+            sigma: float,
+            mean: int,
+            num_movements: int
+        ) -> Sequence[float]: ...
 
 def generate_movement(
-        range_vals: Sequence[int],
-        weights: Sequence[float],
-        k: int
-) -> list[int]:
-    return rnd.choices(range_vals, weights=weights, k=k)
+        sigma: float,
+        mean: int,
+        num_movements: int
+) -> list[float]:
+    return [rnd.gauss(mu=mean, sigma=sigma) for _ in range(num_movements)]
 
 def main(
         config: SimulationConfig,
@@ -33,8 +34,8 @@ def main(
     walks = []
     for _ in range(config.num_lines):
         moves = generator(
-            config.range_vals, 
-            config.weights, 
+            config.sigma, 
+            config.mean, 
             config.num_timestamps
         )
         walk = list(itertools.accumulate(moves, initial=0))
@@ -48,8 +49,8 @@ if __name__ == "__main__":
     config = SimulationConfig(
         num_timestamps=10,
         num_lines=5000,
-        range_vals=list(range(-4,5)),
-        weights=[0.1, 0.2, 0.3, 0.4, 0.5, 0.4, 0.3, 0.2, 0.1]
+        sigma=1.5,
+        mean=0
     )
 
     main(config, generate_movement)
