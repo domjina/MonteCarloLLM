@@ -1,50 +1,56 @@
 import random as rnd
+import itertools
 import matplotlib.pyplot as plt
-from typing import Callable
+from typing import Protocol, Sequence
+from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class SimulationConfig:
+    num_timestamps: int
+    num_lines: int
+    range_vals: Sequence[int]
+    weights: Sequence[float]
+
+class MovementGenerator(Protocol):
+    def __call__(
+            self, 
+            range_vals: Sequence[int],
+            weights: Sequence[float],
+            k: int
+        ) -> Sequence[int]: ...
 
 def generate_movement(
-        RANGE_: list[int],
-        WEIGHTS: list[float],
-        TIMESTAMPS: int
-):
-    movement = rnd.choices(RANGE_, weights=WEIGHTS, k=TIMESTAMPS)
-    return movement
-
+        range_vals: Sequence[int],
+        weights: Sequence[float],
+        k: int
+) -> list[int]:
+    return rnd.choices(range_vals, weights=weights, k=k)
 
 def main(
-        movement_generator: Callable[[list[int], list[float], int], list[int]],
-        TIMESTAMPS: int,
-        NUM_LINES: int,
-        RANGE_: list[int],
-        WEIGHTS: list[float]
-):
-    data = [[0] for _ in range(NUM_LINES)]
-
-    for line in range(NUM_LINES):
-        movement = movement_generator(RANGE_=RANGE_, 
-                                      WEIGHTS=WEIGHTS, 
-                                      TIMESTAMPS=TIMESTAMPS
-                                      )
-        for _ in range(len(movement)):
-            data[line].append(data[line][_-1] + movement[_])
-
-    for line in data:
-        plt.plot(line)
-        plt.pause(0.1)
+        config: SimulationConfig,
+        generator: MovementGenerator
+) -> None:
+    walks = []
+    for _ in range(config.num_lines):
+        moves = generator(
+            config.range_vals, 
+            config.weights, 
+            config.num_timestamps
+        )
+        walk = list(itertools.accumulate(moves, initial=0))
+        walks.append(walk)
+    
+    for walk in walks:
+        plt.plot(walk)
+        plt.pause(0.01)
     plt.show()
 
-
 if __name__ == "__main__":
-    gen = generate_movement
-    TIMESTAMPS = 10
-    NUM_LINES = 50
-    RANGE_ = [x for x in range(-5, 4)]
-    WEIGHTS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.4, 0.3, 0.2, 0.1]
-
-    main(
-        movement_generator=gen,
-        TIMESTAMPS=TIMESTAMPS,
-        NUM_LINES=NUM_LINES,
-        RANGE_=RANGE_,
-        WEIGHTS=WEIGHTS
+    config = SimulationConfig(
+        num_timestamps=10,
+        num_lines=50,
+        range_vals=list(range(-5,4)),
+        weights=[0.1, 0.2, 0.3, 0.4, 0.5, 0.4, 0.3, 0.2, 0.1]
     )
+
+    main(config, generate_movement)
